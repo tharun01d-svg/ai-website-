@@ -41,7 +41,7 @@ interface EnrollmentModalProps {
 }
 
 export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }: EnrollmentModalProps) {
-  const [step, setStep] = useState(1); // 1 = Redirecting/Initializing, 2 = Dummy for fallback, 3 = Success Redirect
+  const [step, setStep] = useState(1); // 1 = Redirecting/Initializing, 2 = Payment Unsuccessful, 3 = Success Redirect
   const [error, setError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [countdown, setCountdown] = useState(5);
@@ -129,7 +129,7 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
         amount: data.amount,
         currency: data.currency,
         name: "AI Website Agency",
-        description: "Lifetime Access Blueprint & Bonusses",
+        description: "Lifetime Access Blueprint & Bonuses",
         image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=128&h=128&q=80",
         order_id: data.id,
         prefill: {
@@ -165,6 +165,7 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
             setStep(3);
           } catch (err: any) {
             setError(err.message || "Failed to finalize transaction safely.");
+            setStep(2);
           } finally {
             setIsProcessing(false);
           }
@@ -172,6 +173,8 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
         modal: {
           ondismiss: function () {
             setIsProcessing(false);
+            setStep(2);
+            setError("Payment session dismissed or cancelled by the student before processing.");
           }
         }
       };
@@ -183,6 +186,7 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
       console.error("Razorpay workflow initiation error:", err);
       setError(err.message || "An error occurred starting the secure checkout flow.");
       setIsProcessing(false);
+      setStep(2);
     }
   };
 
@@ -213,7 +217,11 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
                 </div>
                 <button 
                   type="button"
-                  onClick={() => { setSandboxDemo(null); onClose(); }} 
+                  onClick={() => {
+                    setSandboxDemo(null);
+                    setStep(2);
+                    setError("Sandbox setup cancelled.");
+                  }} 
                   className="text-gray-400 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-colors"
                 >
                   <X size={16} />
@@ -258,7 +266,8 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
                 type="button"
                 onClick={() => {
                   setSandboxDemo(null);
-                  onClose();
+                  setStep(2);
+                  setError("Simulated payment transaction cancelled by the developer.");
                 }}
                 className="flex-1 py-3 px-4 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 border border-white/10 transition-all text-center cursor-pointer"
               >
@@ -288,6 +297,7 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
                     setStep(3); // Shift directly to celebration & Google form redirect screen
                   } catch (err: any) {
                     setError(err.message || "Simulated payment verification failure.");
+                    setStep(2);
                   } finally {
                     setIsProcessing(false);
                   }
@@ -364,6 +374,67 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
                 <p className="text-[10px] text-gray-500 mt-3 flex items-center justify-center gap-1">
                   <Lock size={10} /> Fully PCI-DSS safe 256-bit automated encryption
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: PAYMENT NOT SUCCESSFUL / FAILED STATE */}
+          {step === 2 && (
+            <div className="text-center py-6 space-y-6" id="modal-failed-screen">
+              {/* Alert indicator badge with red pulsing halo */}
+              <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-red-600/10 border border-red-500/20 animate-ping opacity-75" />
+                <div className="absolute -inset-2 rounded-full bg-red-500/5 animate-pulse" />
+                <div className="relative w-16 h-16 rounded-full bg-red-950/40 border border-red-500/30 flex items-center justify-center shadow-lg shadow-red-500/10">
+                  <AlertCircle className="text-red-400" size={30} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-red-500/10 text-red-400 border border-red-400/20">
+                  🚫 PAYMENT UNSUCCESSFUL
+                </span>
+                <h3 className="text-xl font-extrabold text-white font-display">
+                  Transaction Was Not Finished
+                </h3>
+                <p className="text-xs text-gray-400 leading-relaxed max-w-sm mx-auto">
+                  Your payment could not be processed or authorized at this time. Don't worry — no funds have been debited from your card or wallet.
+                </p>
+              </div>
+
+              {error && (
+                <div className="p-4 bg-red-950/40 border border-red-500/25 text-xs text-red-300 rounded-xl flex flex-col gap-1 text-left max-w-sm mx-auto">
+                  <span className="font-mono text-[9px] uppercase font-bold text-red-400 tracking-widest">Error Details:</span>
+                  <p className="leading-relaxed font-semibold">{error}</p>
+                </div>
+              )}
+
+              {/* Action buttons to retry checkout or dismiss modal */}
+              <div className="pt-2 space-y-2.5 max-w-sm mx-auto">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setStep(1);
+                    setError("");
+                    setTimeout(() => {
+                      triggerCheckout();
+                    }, 400);
+                  }}
+                  className="w-full py-3.5 px-6 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 active:translate-y-[1px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-500/20"
+                  id="btn-retry-payment"
+                >
+                  <RefreshCw size={13} className="animate-spin-slow" />
+                  Retry Secure Checkout
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full py-3 px-6 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 border border-white/10 transition-all text-center cursor-pointer"
+                  id="btn-cancel-failed"
+                >
+                  Close & Change Plan
+                </button>
               </div>
             </div>
           )}
