@@ -1,14 +1,26 @@
 import crypto from "crypto";
 
 export default async (req: Request) => {
+  const corsHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+  };
+
+  // Handle CORS preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
+  }
+
   // Only allow POST requests for cryptographic verification
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed. Use POST." }), {
       status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
+      headers: corsHeaders
     });
   }
 
@@ -19,7 +31,7 @@ export default async (req: Request) => {
     if (isSandboxDemo) {
       return new Response(JSON.stringify({ verified: true, isDemo: true }), {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -27,14 +39,14 @@ export default async (req: Request) => {
     if (!keySecret) {
       return new Response(JSON.stringify({ error: "Razorpay Key Secret is required for formal cryptographic verification" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return new Response(JSON.stringify({ error: "Missing required Razorpay parameters for verification" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -50,12 +62,12 @@ export default async (req: Request) => {
     if (isVerified) {
       return new Response(JSON.stringify({ verified: true }), {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     } else {
       return new Response(JSON.stringify({ verified: false, error: "Invalid payment validation signature matching" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -63,12 +75,7 @@ export default async (req: Request) => {
     console.error("Netlify Serverless: Signature Verification Error:", error);
     return new Response(JSON.stringify({ error: error.message || "Cryptographic verification failed" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: corsHeaders
     });
   }
-};
-
-// Set precise custom path route matching for Netlify runtime
-export const config = {
-  path: "/api/razorpay/verify-payment"
 };

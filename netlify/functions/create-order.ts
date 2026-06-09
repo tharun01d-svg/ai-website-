@@ -1,14 +1,26 @@
 import crypto from "crypto";
 
 export default async (req: Request) => {
+  const corsHeaders = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+  };
+
+  // Handle CORS preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
+  }
+
   // Only allow POST requests for order creation
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed. Use POST." }), {
       status: 405,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
+      headers: corsHeaders
     });
   }
 
@@ -17,7 +29,7 @@ export default async (req: Request) => {
     if (!amount) {
       return new Response(JSON.stringify({ error: "Amount is required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -33,7 +45,7 @@ export default async (req: Request) => {
         message: "Razorpay Key ID or Secret is missing in Netlify environment variables. Running in Sandbox Demo simulation mode."
       }), {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -58,7 +70,7 @@ export default async (req: Request) => {
       const errorText = await response.text();
       return new Response(JSON.stringify({ error: `Razorpay Order generation failed: ${errorText}` }), {
         status: response.status,
-        headers: { "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
 
@@ -71,19 +83,14 @@ export default async (req: Request) => {
       isSandboxDemo: false
     }), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: corsHeaders
     });
 
   } catch (error: any) {
     console.error("Netlify Serverless: Create Order Error:", error);
     return new Response(JSON.stringify({ error: error.message || "Failed to create order" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: corsHeaders
     });
   }
-};
-
-// Set precise custom path route matching for Netlify runtime
-export const config = {
-  path: "/api/razorpay/create-order"
 };

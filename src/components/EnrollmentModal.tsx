@@ -188,6 +188,15 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
       };
 
       const rzp = new (window as any).Razorpay(options);
+      
+      // Capture native payment failures (declined cards, bad OTPs, etc.)
+      rzp.on("payment.failed", function (response: any) {
+        console.error("Razorpay native payment failure:", response.error);
+        setError(response.error.description || response.error.reason || "The payment transaction failed or was declined.");
+        setStep(2);
+        setIsProcessing(false);
+      });
+
       rzp.open();
 
     } catch (err: any) {
