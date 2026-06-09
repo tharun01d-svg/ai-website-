@@ -1,0 +1,6 @@
+{
+  "name": "AI Website Agency Blueprint",
+  "description": "Premium landing page for the AI Website Agency Blueprint course, featuring structured modules, bonuses, FAQs, and interactive enrollment flow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
