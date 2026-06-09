@@ -164,9 +164,16 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
               })
             });
 
+            const verifyText = await verifyResponse.text();
+            let verifyData: any;
+            try {
+              verifyData = JSON.parse(verifyText);
+            } catch (e) {
+              throw new Error(`Verification backend returned unexpected response (Status ${verifyResponse.status}): ${verifyText.substring(0, 150)}`);
+            }
+
             if (!verifyResponse.ok) {
-              const verifyErr = await verifyResponse.json();
-              throw new Error(verifyErr.error || "Cryptographic validation failed.");
+              throw new Error(verifyData?.error || "Cryptographic validation failed.");
             }
 
             // Success! Proceed to celebration and onboarding redirect
@@ -305,9 +312,16 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
                       body: JSON.stringify({ isSandboxDemo: true })
                     });
                     
+                    const verifyText = await verifyResponse.text();
+                    let verifyData: any;
+                    try {
+                      verifyData = JSON.parse(verifyText);
+                    } catch (e) {
+                      throw new Error(`Simulation validation returned unexpected response (Status ${verifyResponse.status}): ${verifyText.substring(0, 150)}`);
+                    }
+
                     if (!verifyResponse.ok) {
-                      const verifyErr = await verifyResponse.json();
-                      throw new Error(verifyErr.error || "Simulation signature validation failed.");
+                      throw new Error(verifyData?.error || "Simulation signature validation failed.");
                     }
 
                     setSandboxDemo(null);
