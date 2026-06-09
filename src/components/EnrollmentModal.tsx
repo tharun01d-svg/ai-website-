@@ -105,12 +105,20 @@ export default function EnrollmentModal({ isOpen, onClose, initialPrice = 999 }:
         body: JSON.stringify({ amount: initialPrice })
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to initialize order from checkout backend.");
+      // Read response body as text first to avoid breaking if the server returns non-JSON (e.g. standard errors/HTML)
+      const responseText = await response.text();
+      let responseData: any;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        throw new Error(`Server returned non-JSON response (Status ${response.status}): ${responseText.substring(0, 150)}`);
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData?.error || `Failed to initialize order from checkout backend (Status ${response.status}).`);
+      }
+
+      const data = responseData;
 
       // If Razorpay API keys are not supplied in environmental secrets, activate simulator
       if (data.isSandboxDemo) {

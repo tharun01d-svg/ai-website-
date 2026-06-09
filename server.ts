@@ -2,6 +2,10 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import crypto from "crypto";
+import dotenv from "dotenv";
+
+// Load environment variables from .env with override true to apply user live settings
+dotenv.config({ override: true });
 
 async function startServer() {
   const app = express();
